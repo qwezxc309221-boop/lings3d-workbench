@@ -1,0 +1,4 @@
+<launch>
+  <!-- ros_bridge 使用相机已有标定执行图像校正。 -->
+  <include file="$(find lings_3d)/launch/multimaster_start.launch"/>
+</launch>

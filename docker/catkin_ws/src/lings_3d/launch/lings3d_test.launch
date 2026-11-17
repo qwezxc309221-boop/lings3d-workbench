@@ -1,0 +1,26 @@
+<launch>
+  <arg name="pi/2" value="1.5707963267948966"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_stc_node_sensor_stereo_2_left" args="0.330 0.0335 0.082 -$(arg pi/2) 0 -$(arg pi/2) base_link sensor_stereo_2_left" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_stc_node_sensor_stereo_2_right" args="0.330 -0.0335 0.082 -1.54 0 -$(arg pi/2) base_link sensor_stereo_2_right" />
+
+  <arg name="model" />
+  <node name="rviz_1" pkg="rviz" type="rviz" args="-d $(find lings_3d)/narrow_one_3D.rviz" />
+
+  <node ns="sensor_stereo_2" pkg="stereo_image_proc" name="stereo_image_proc" type="stereo_image_proc" output="screen">
+      <param name="stereo_algorithm"     value="0"/>
+      <param name="prefilter_size"       value="9"/>
+      <param name="prefilter_cap"        value="31"/>
+      <param name="correlation_window_size"      value="15"/>
+      <param name="min_disparity"        value="0"/>
+      <param name="disparity_range"      value="64"/>
+      <param name="uniqueness_ratio"     value="15.0"/>
+      <param name="texture_threshold"    value="10"/>
+      <param name="speckle_size"         value="100"/>
+      <param name="speckle_range"        value="4"/>
+      <param name="fullDP"               value="false"/>
+      <param name="P1"                   value="200.0"/>
+      <param name="P2"                   value="400.0"/>
+      <param name="disp12MaxDiff"        value="0"/>
+  </node>
+
+</launch>

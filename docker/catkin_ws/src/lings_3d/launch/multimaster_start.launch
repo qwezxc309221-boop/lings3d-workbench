@@ -1,0 +1,12 @@
+<launch> 
+
+    <node name="master_discovery" pkg="master_discovery_fkie" type="master_discovery" output="screen">
+        <param name="log_level" value="INFO" />
+        <!-- Specifies the multicast group. You can bind the to defined interface by adding @address to the group -->
+        <param name="mcast_group" value="224.0.0.251" />
+    </node>
+
+    <node name="master_sync" pkg="master_sync_fkie" type="master_sync">
+    </node>
+
+</launch>

@@ -1,0 +1,58 @@
+<launch>
+  <!-- 双目 3D 建图（RTAB-Map）
+       用法：先启动 multimaster_start.launch，再启动本文件（不要同时启动 lings3d_test.launch）
+         roslaunch lings_3d lings3d_mapping.launch                 # 接着上次的地图继续建
+         roslaunch lings_3d lings3d_mapping.launch new_map:=true   # 清空，重新建图
+         roslaunch lings_3d lings3d_mapping.launch localization:=true  # 只定位，不修改地图
+       地图数据库保存在 lings_3d/maps/rtabmap.db（在主机 ~/lings3d_docker/catkin_ws/src/lings_3d/maps/ 下）
+  -->
+  <arg name="new_map"       default="false"/>
+  <arg name="localization"  default="false"/>
+  <arg name="rtabmapviz"    default="true"/>
+  <arg name="database_path" default="$(find lings_3d)/maps/rtabmap.db"/>
+
+  <arg     if="$(arg new_map)" name="db_flag" value="--delete_db_on_start"/>
+  <arg unless="$(arg new_map)" name="db_flag" value=""/>
+
+  <arg name="pi/2" value="1.5707963267948966"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_stc_node_sensor_stereo_2_left" args="0.330 0.0335 0.082 -$(arg pi/2) 0 -$(arg pi/2) base_link sensor_stereo_2_left" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_stc_node_sensor_stereo_2_right" args="0.330 -0.0335 0.082 -1.54 0 -$(arg pi/2) base_link sensor_stereo_2_right" />
+
+  <!-- 生成校正图像 image_rect / image_rect_color（参数与 lings3d_test.launch 相同） -->
+  <node ns="sensor_stereo_2" pkg="stereo_image_proc" name="stereo_image_proc" type="stereo_image_proc" output="screen">
+      <param name="stereo_algorithm"     value="0"/>
+      <param name="prefilter_size"       value="9"/>
+      <param name="prefilter_cap"        value="31"/>
+      <param name="correlation_window_size"      value="15"/>
+      <param name="min_disparity"        value="0"/>
+      <param name="disparity_range"      value="64"/>
+      <param name="uniqueness_ratio"     value="15.0"/>
+      <param name="texture_threshold"    value="10"/>
+      <param name="speckle_size"         value="100"/>
+      <param name="speckle_range"        value="4"/>
+      <param name="fullDP"               value="false"/>
+      <param name="P1"                   value="200.0"/>
+      <param name="P2"                   value="400.0"/>
+      <param name="disp12MaxDiff"        value="0"/>
+  </node>
+
+  <!-- RTAB-Map：双目视觉里程计 + 建图 + 回环检测 -->
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+    <arg name="stereo"                  value="true"/>
+    <arg name="stereo_namespace"        value="/sensor_stereo_2"/>
+    <arg name="left_image_topic"        value="/sensor_stereo_2/left/image_rect_color"/>
+    <arg name="right_image_topic"       value="/sensor_stereo_2/right/image_rect"/>
+    <arg name="left_camera_info_topic"  value="/sensor_stereo_2/left/camera_info"/>
+    <arg name="right_camera_info_topic" value="/sensor_stereo_2/right/camera_info"/>
+    <arg name="approx_sync"             value="false"/>  <!-- 相机左右时间戳完全一致 -->
+    <arg name="frame_id"                value="base_link"/>
+    <arg name="database_path"           value="$(arg database_path)"/>
+    <arg name="localization"            value="$(arg localization)"/>
+    <arg name="rtabmapviz"              value="$(arg rtabmapviz)"/>
+    <arg name="rviz"                    value="false"/>
+    <arg name="wait_for_transform"      value="0.5"/>
+    <!-- 图像仅 410x308，适当降低特征匹配门槛；里程计丢失后自动重置 -->
+    <arg name="args"      value="$(arg db_flag) --Vis/MinInliers 12 --Grid/3D true --Grid/RangeMax 5"/>
+    <arg name="odom_args" value="--Vis/MinInliers 12 --Odom/ResetCountdown 1"/>
+  </include>
+</launch>

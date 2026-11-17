@@ -1,0 +1,4 @@
+# 在既有 pytorch conda 环境中安装。
+fastapi==0.162.7
+uvicorn==0.54.0
+# 复用环境中的 numpy、pillow、torch、torchvision、opencv-python、viser 和 trimesh。
